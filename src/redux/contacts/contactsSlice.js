@@ -1,32 +1,48 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
+import { createSlice } from "@reduxjs/toolkit";
+import {
+  addContacts,
+  deleteContacts,
+  getContacts,
+} from "./contacts-operations";
 
-export const contactsApi = createApi({
-  reducerPath: 'contactsApi',
-    baseQuery: fetchBaseQuery({ baseUrl: 'https://61a26152014e1900176de917.mockapi.io/' }),
-  tagTypes: ['Contacts'],
-  endpoints: (builder) => ({
-    fetchContacts: builder.query({
-        query: () => `/contacts`,
-        providesTags: ['Contacts'],
+const contactSlice = createSlice({
+  name: "contacts",
+  initialState: {
+    contacts: [],
+    isLoading: false,
+    isDeleting: false,
+  },
+  extraReducers: {
+    [getContacts.pending]: (state, action) => {
+      state.isLoading = true;
+    },
+    [getContacts.fulfilled](state, action) {
+      state.contacts = action.payload;
+      state.isLoading = false;
+    },
+
+    [addContacts.pending](state, action) {
+      state.isLoading = true;
+    },
+    [addContacts.fulfilled](state, action) {
+      state.contacts.push(action.payload);
+      state.isLoading = false;
+    },
+
+    [deleteContacts.pending](state, action) {
+      state.isDeleting = true;
+    },
+    [deleteContacts.fulfilled]: (state, action) => ({
+      ...state,
+      contacts: state.contacts.filter(({ id }) => id !== action.payload),
+      isDeleting: false,
     }),
-      deleteContact: builder.mutation({
-          query: contactId => ({
-              url: `/contacts/${contactId}`,
-              method: 'DELETE'
-          }),
-          invalidatesTags: ['Contacts']
-      }),
-      createContact: builder.mutation({
-          query: (contactName) => ({
-              url: '/contacts',
-              method: 'POST',
-              body: {
-                  name: contactName,
-              }
-          }),
-          invalidatesTags: ['Contacts']
-      })
-  }),
-})
+    // [deleteContacts.fulfilled]: (state, action) => {
+    //     state.contacts.filter(({id}) => id !== action.payload);
 
-export const { useFetchContactsQuery, useDeleteContactMutation, useCreateContactMutation } = contactsApi;
+    //     state.isDeleting = false;
+    // },
+  },
+});
+
+export default contactSlice.reducer;
